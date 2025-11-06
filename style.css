@@ -23,8 +23,8 @@ header {
 
 /* लोगो इमेज */
 #logoImage {
-  width: 80px; /* बहुत छोटा साइज */
-  height: 80px;
+  width: 100px; /* बहुत छोटा साइज */
+  height: 100px;
   border-radius: 50%; /* गोल शेप */
   border: 3px solid #00ff00; /* ग्रीन खुबसूरत फ्रेम */
   box-shadow: 0 0 15px 5px #00ff00; /* हरे रंग का गाऊलिंग इफेक्ट */
