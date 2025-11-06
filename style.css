@@ -13,6 +13,31 @@ header {
   margin-top: 20px;
 }
 
+/* लोगो इमेज वाला कंटेनर ताकि सेंट्रल रिजाइन हो */
+#logoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* लोगो इमेज */
+#logoImage {
+  width: 40px; /* बहुत छोटा साइज */
+  height: 40px;
+  border-radius: 50%; /* गोल शेप */
+  border: 3px solid #00ff00; /* ग्रीन खुबसूरत फ्रेम */
+  box-shadow: 0 0 15px 5px #00ff00; /* हरे रंग का गाऊलिंग इफेक्ट */
+  cursor: pointer;
+  transition: transform 0.3s;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+#logoImage:hover {
+  transform: scale(1.1);
+}
+
 #logo {
   font-size: 45px;
   font-weight: 900;
@@ -84,7 +109,7 @@ button[type="submit"]:hover {
 }
 
 .warning-text {
-  background-color: #f00; /* Yellow background */
+  background-color: #f00; /* Red background (warning) */
   color: #000;
   padding: 15px 20px;
   border-radius: 6px;
