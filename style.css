@@ -89,10 +89,8 @@ footer {
   color: #0f0;
 }
 
-#footerName p {
-  font-weight: bold;
-  }{
-  color: #f00;
+#footerName {
+  color: #ff0;
   text-shadow: 0 0 10px lime, 0 0 20px green;
   cursor: pointer;
 }
