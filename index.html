@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SSFYT UID Editor</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
@@ -19,23 +19,30 @@
     <section id="deletePage" class="page active">
       <h2>UID Delete Tool</h2>
       <form id="deleteForm">
-        <input type="file" id="deleteFile" accept=".bytes,.meta" required>
+        <input type="file" id="deleteFile" accept=".bytes,.meta" required />
         <button type="submit">Delete UID & Download</button>
       </form>
+      <div id="warningMessage" class="warning-text">
+        <strong>WARNING:</strong> Please do not upload a previously deleted UID file, otherwise the file will get corrupted.
+      </div>
     </section>
 
     <section id="editPage" class="page">
       <h2>UID Edit Tool</h2>
       <form id="editForm">
-        <input type="file" id="editFile" accept=".bytes,.meta" required>
-        <input type="number" id="newUID" placeholder="Enter new UID" required>
+        <input type="file" id="editFile" accept=".bytes,.meta" required />
+        <input type="number" id="newUID" placeholder="Enter new UID" required />
         <button type="submit">Edit UID & Download</button>
       </form>
+      <!-- Optional warning on edit page if needed -->
     </section>
   </main>
 
   <footer>
-    <p>©COPYRIGHT 2026 by <span id="footerName" onclick="openChannel()">SSFYT</span></p>
+    <p>
+      ©COPYRIGHT 2026 by
+      <span id="footerName" onclick="openChannel()">SSFYT</span>
+    </p>
   </footer>
 
   <script src="script.js"></script>
