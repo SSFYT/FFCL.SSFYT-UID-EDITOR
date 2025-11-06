@@ -16,7 +16,7 @@ header {
 #logo {
   font-size: 45px;
   font-weight: 900;
-  color: #f0f;
+  color: #0f0;
   text-shadow: 0 0 15px #0f0, 0 0 30px #00ff80;
   cursor: pointer;
   transition: transform 0.3s;
@@ -90,7 +90,7 @@ footer {
 }
 
 #footerName {
-  color: #0f0;
+  color: #f00;
   text-shadow: 0 0 10px lime, 0 0 20px green;
   cursor: pointer;
 }
