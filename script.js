@@ -13,7 +13,7 @@ function encodeULEB128(value) {
   const result = [];
   do {
     let byte = Number(value & 0x7Fn);   // lower 7 bits
-    value >>= 7n;                       // right shift 7 bits
+    value >>= 7n;                       // right shift 7 bits (BigInt)
     if (value !== 0n) {
       byte |= 0x80;                    // set MSB if more bytes follow
     }
@@ -71,10 +71,10 @@ function processFile(file, mode, newUID = null) {
   reader.readAsArrayBuffer(file);
 }
 
-// Delete UID logic
+// Delete UID logic - सिर्फ 1 zero byte डालें बजाय 5 के
 function deleteUID(hex, start, end) {
   const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
-  return hex.replace(pattern, start + '00'.repeat(5) + end);
+  return hex.replace(pattern, start + '00' + end);
 }
 
 // Replace UID logic
