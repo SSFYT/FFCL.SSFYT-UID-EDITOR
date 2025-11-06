@@ -7,7 +7,6 @@ function openChannel() {
   window.open('https://youtube.com/@ssfyt_777?si=9JBqTAd9bgnNvT8F', '_blank');
 }
 
-// Encode & Decode ULEB128 with BigInt
 function encodeULEB128(value) {
   value = BigInt(value);
   const result = [];
@@ -34,12 +33,38 @@ function fromHexString(hex) {
   return new Uint8Array(arr);
 }
 
-// नया deleteUID function - पहला बाइट '30', बाकी 4 बाइट्स '00' से भरें
+// नीचे से ऊपर खोज कर सबसे आखिरी मैच वाला UID निकालो
+function findLastIndexOfPattern(hex, start, end) {
+  let lastIndex = -1;
+  let pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
+  let match;
+  while ((match = pattern.exec(hex)) !== null) {
+    lastIndex = match.index;
+  }
+  return lastIndex;
+}
+
+// Delete function: पहले बाइट को '00' से रिप्लेस karo,  
+// बाकी 4 बाइट्स (8 hex chars) पूरी तरह हटा दो (remove from hex string)
 function deleteUID(hex, start, end) {
-  // regex से pattern खोजो: start + 5 बाइटs (10 hex chars) + end
-  const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
-  // रिप्लेसमेंट: start + '30' + '00000000' + end (पहला बाइट 30, बाकी चार 00)
-  return hex.replace(pattern, start + '3000000000' + end);
+  let lastIndex = findLastIndexOfPattern(hex, start, end);
+  if (lastIndex === -1) return hex; // pattern न मिले तो वैसा ही लौटाओ
+
+  // pattern के शुरू और खत्म स्थान से substring निकालो
+  const len = start.length + 10 + end.length; // total matched length
+  let fullMatch = hex.substr(lastIndex, len);
+
+  // fullMatch: start + 5 bytes (10 hex) + end
+
+  // 5 bytes hex start at start.length, length 10
+  // first byte लेना है '00' से, बाकी substring से हटा देंगे
+
+  // define replacement: start + '00' + end (remove other bytes)
+  // इसलिए hex string से पूरी 5 bytes में से पहला 2 hex char ‘00’, बाकी 8 hex char remove
+  let replacement = start + '00' + end;
+
+  // hex को दो भागों में तोड़ो - पहले lastIndex तक, फिर replacement, फिर बाकी
+  return hex.slice(0, lastIndex) + replacement + hex.slice(lastIndex + len);
 }
 
 function replaceUID(hex, start, end, newUIDHex) {
@@ -48,13 +73,17 @@ function replaceUID(hex, start, end, newUIDHex) {
   } else if (newUIDHex.length > 10) {
     newUIDHex = newUIDHex.slice(0, 10);
   }
-  const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
-  return hex.replace(pattern, start + newUIDHex + end);
+  let lastIndex = findLastIndexOfPattern(hex, start, end);
+  if (lastIndex === -1) return hex;
+
+  const len = start.length + 10 + end.length;
+  let replacement = start + newUIDHex + end;
+  return hex.slice(0, lastIndex) + replacement + hex.slice(lastIndex + len);
 }
 
 function processFile(file, mode, newUID = null) {
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     let data = new Uint8Array(e.target.result);
     let hex = toHexString(data);
 
