@@ -8,7 +8,10 @@
 </head>
 <body>
   <header>
-    <h1 id="logo" onclick="openChannel()">SSFYT</h1>
+    <div id="logoContainer">
+      <img src="https://i.ibb.co/0pKrffb3/x.png" alt="SSFYT Logo" id="logoImage" onclick="openChannel()" />
+      <h1 id="logo" onclick="openChannel()">SSFYT</h1>
+    </div>
     <nav>
       <button onclick="showPage('delete')">UID Delete</button>
       <button onclick="showPage('edit')">UID Edit</button>
@@ -34,7 +37,6 @@
         <input type="number" id="newUID" placeholder="Enter new UID" required />
         <button type="submit">Edit UID & Download</button>
       </form>
-      <!-- Optional warning on edit page if needed -->
     </section>
   </main>
 
