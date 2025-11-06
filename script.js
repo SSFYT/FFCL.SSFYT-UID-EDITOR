@@ -7,27 +7,25 @@ function openChannel() {
   window.open('https://youtube.com/@ssfyt_777?si=9JBqTAd9bgnNvT8F', '_blank');
 }
 
-// Encode & Decode ULEB128 (BigInt support)
+// Encode & Decode ULEB128 with BigInt
 function encodeULEB128(value) {
   value = BigInt(value);
   const result = [];
   do {
-    let byte = Number(value & 0x7Fn);   // lower 7 bits
-    value >>= 7n;                       // right shift 7 bits (BigInt)
+    let byte = Number(value & 0x7Fn);
+    value >>= 7n;
     if (value !== 0n) {
-      byte |= 0x80;                    // set MSB if more bytes follow
+      byte |= 0x80;
     }
     result.push(byte);
   } while (value !== 0n);
   return new Uint8Array(result);
 }
 
-// Convert ArrayBuffer to hex string
 function toHexString(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-// Convert hex string back to bytes
 function fromHexString(hex) {
   let arr = [];
   for (let i = 0; i < hex.length; i += 2) {
@@ -36,7 +34,24 @@ function fromHexString(hex) {
   return new Uint8Array(arr);
 }
 
-// Search and Replace UID in .bytes or .meta
+// नया deleteUID function - पहला बाइट '30', बाकी 4 बाइट्स '00' से भरें
+function deleteUID(hex, start, end) {
+  // regex से pattern खोजो: start + 5 बाइटs (10 hex chars) + end
+  const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
+  // रिप्लेसमेंट: start + '30' + '00000000' + end (पहला बाइट 30, बाकी चार 00)
+  return hex.replace(pattern, start + '3000000000' + end);
+}
+
+function replaceUID(hex, start, end, newUIDHex) {
+  if (newUIDHex.length < 10) {
+    newUIDHex = newUIDHex.padEnd(10, '0');
+  } else if (newUIDHex.length > 10) {
+    newUIDHex = newUIDHex.slice(0, 10);
+  }
+  const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
+  return hex.replace(pattern, start + newUIDHex + end);
+}
+
 function processFile(file, mode, newUID = null) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -49,11 +64,13 @@ function processFile(file, mode, newUID = null) {
       } else if (file.name.endsWith('.meta')) {
         hex = deleteUID(hex, '03', 'A203');
       }
-    } 
-    else if (mode === 'edit') {
-      if (!newUID) return alert("Please enter new UID!");
+    } else if (mode === 'edit') {
+      if (!newUID) return alert("कृपया नया UID दर्ज करें!");
       let uidBytes = encodeULEB128(BigInt(newUID));
       let uidHex = toHexString(uidBytes);
+      if (uidHex.length < 10) uidHex = uidHex.padEnd(10, '0');
+      else if (uidHex.length > 10) uidHex = uidHex.slice(0, 10);
+
       if (file.name.endsWith('.bytes')) {
         hex = replaceUID(hex, '38', '42', uidHex);
       } else if (file.name.endsWith('.meta')) {
@@ -71,31 +88,18 @@ function processFile(file, mode, newUID = null) {
   reader.readAsArrayBuffer(file);
 }
 
-// Delete UID logic - सिर्फ 1 zero byte डालें बजाय 5 के
-function deleteUID(hex, start, end) {
-  const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
-  return hex.replace(pattern, start + '00' + end);
-}
-
-// Replace UID logic
-function replaceUID(hex, start, end, newUIDHex) {
-  const pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
-  return hex.replace(pattern, start + newUIDHex + end);
-}
-
-// Delete Form
 document.getElementById('deleteForm').addEventListener('submit', e => {
   e.preventDefault();
   const file = document.getElementById('deleteFile').files[0];
-  if (!file) return alert("Please upload a file!");
+  if (!file) return alert("कृपया फाइल अपलोड करें!");
   processFile(file, 'delete');
 });
 
-// Edit Form
 document.getElementById('editForm').addEventListener('submit', e => {
   e.preventDefault();
   const file = document.getElementById('editFile').files[0];
-  const newUID = document.getElementById('newUID').value;
-  if (!file) return alert("Please upload a file!");
+  const newUID = document.getElementById('newUID').value.trim();
+  if (!file) return alert("कृपया फाइल अपलोड करें!");
+  if (!newUID) return alert("कृपया नया UID डालें!");
   processFile(file, 'edit', newUID);
 });
