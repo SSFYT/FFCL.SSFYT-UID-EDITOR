@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #000;
+  color: #0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+header {
+  text-align: center;
+  margin-top: 20px;
+}
+
+#logo {
+  font-size: 45px;
+  font-weight: 900;
+  color: #0f0;
+  text-shadow: 0 0 15px #0f0, 0 0 30px #00ff80;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+#logo:hover {
+  transform: scale(1.1);
+}
+
+nav button {
+  margin: 10px;
+  padding: 10px 20px;
+  background: #0f0;
+  color: #000;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+nav button:hover {
+  background: #00ff80;
+}
+
+main {
+  margin-top: 50px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.page {
+  display: none;
+  text-align: center;
+}
+
+.page.active {
+  display: block;
+}
+
+input[type="file"], input[type="number"] {
+  display: block;
+  margin: 20px auto;
+  padding: 10px;
+  background: #111;
+  border: 1px solid #0f0;
+  color: #0f0;
+  border-radius: 5px;
+  width: 80%;
+}
+
+button[type="submit"] {
+  background: #0f0;
+  color: #000;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+button[type="submit"]:hover {
+  background: #00ff80;
+}
+
+footer {
+  margin-top: 60px;
+  text-align: center;
+  color: #0f0;
+}
+
+#footerName {
+  color: #0f0;
+  text-shadow: 0 0 10px lime, 0 0 20px green;
+  cursor: pointer;
+}
