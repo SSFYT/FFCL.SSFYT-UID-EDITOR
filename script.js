@@ -43,10 +43,8 @@ function findLastIndexOfPatternBetween(hex, start, end) {
     lastStartIndex = match.index;
   }
   if (lastStartIndex === -1) return null;
-
   let endIndex = hex.indexOf(end, lastStartIndex + start.length);
   if (endIndex === -1) return null;
-
   return { startIndex: lastStartIndex, endIndex: endIndex + end.length };
 }
 
@@ -79,35 +77,30 @@ function deleteUID(hex, start, end) {
   let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
 
   if (/^0+$/.test(bytesHex) || bytesLength < 7) {
-    return null; // Deleted file or invalid
+    return null; // Deleted UID or too small, stop download
   }
-
   let replacement = start + '00' + end;
   return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
 }
 
-// नया Edit function जो Deleted UID हटाकर नया UID रिप्लेस करता है
 function editUID(hex, start, end, newUIDHex) {
   let range = findLastIndexOfPatternBetween(hex, start, end);
   if (!range) return hex;
 
   let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
 
-  // यदि Deleted UID हो तो उसे हटा दो और नया UID स्थान पर डाल दो
   if (/^0+$/.test(bytesHex)) {
-    // सीधे जगह लें start + newUIDHex + end
+    // Deleted UID, replace whole block with newUIDHex
     let replacement = start + newUIDHex + end;
     return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
   } else {
-    // अन्यथा पुराने replaceUID जैसा काम करें
+    // Replace based on block size, pad or trim newUIDHex
     let lengthToReplace = range.endIndex - range.startIndex - start.length - end.length;
-
     if (newUIDHex.length < lengthToReplace) {
       newUIDHex = newUIDHex.padEnd(lengthToReplace, '0');
     } else if (newUIDHex.length > lengthToReplace) {
       newUIDHex = newUIDHex.slice(0, lengthToReplace);
     }
-
     let replacement = start + newUIDHex + end;
     return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
   }
@@ -128,16 +121,22 @@ function processFile(file, mode, newUID = null) {
         }
         hex = newHex;
       } else if (file.name.endsWith('.meta')) {
-        hex = deleteUID(hex, '03', 'A203');
+        let newHex = deleteUID(hex, '03', 'A203');
+        if (newHex === null) {
+          alert('UID already deleted.');
+          return;
+        }
+        hex = newHex;
       }
     } else if (mode === 'edit') {
       if (!newUID) return alert("कृपया नया UID दर्ज करें!");
       let uidBytes = encodeULEB128(BigInt(newUID));
       let uidHex = toHexString(uidBytes);
+
       if (file.name.endsWith('.bytes')) {
         hex = editUID(hex, '0138', '42', uidHex);
       } else if (file.name.endsWith('.meta')) {
-        hex = replaceUID(hex, '03', 'A203', uidHex);
+        hex = editUID(hex, '03', 'A203', uidHex);
       }
     }
 
@@ -167,7 +166,7 @@ document.getElementById('editForm').addEventListener('submit', e => {
   processFile(file, 'edit', newUID);
 });
 
-// UID डिस्प्ले वाले इवेंट लिसनर
+// UID Display event listeners
 
 document.getElementById('deleteFile').addEventListener('change', e => {
   const file = e.target.files[0];
@@ -177,8 +176,8 @@ document.getElementById('deleteFile').addEventListener('change', e => {
   }
   const reader = new FileReader();
   reader.onload = function (ev) {
-    const data = new Uint8Array(ev.target.result);
-    const hex = toHexString(data);
+    let data = new Uint8Array(ev.target.result);
+    let hex = toHexString(data);
     let uidHex = null;
     if (file.name.endsWith('.bytes')) {
       uidHex = extractUIDFromHex(hex, '0138', '42');
@@ -186,7 +185,7 @@ document.getElementById('deleteFile').addEventListener('change', e => {
       uidHex = extractUIDFromHex(hex, '03', 'A203');
     }
     if (uidHex) {
-      const uid = hexToULEB128Number(uidHex);
+      let uid = hexToULEB128Number(uidHex);
       document.getElementById('currentUIDDisplayDelete').textContent = 'Current UID: ' + uid;
     } else {
       document.getElementById('currentUIDDisplayDelete').textContent = 'UID not found in this file';
@@ -203,8 +202,8 @@ document.getElementById('editFile').addEventListener('change', e => {
   }
   const reader = new FileReader();
   reader.onload = function (ev) {
-    const data = new Uint8Array(ev.target.result);
-    const hex = toHexString(data);
+    let data = new Uint8Array(ev.target.result);
+    let hex = toHexString(data);
     let uidHex = null;
     if (file.name.endsWith('.bytes')) {
       uidHex = extractUIDFromHex(hex, '0138', '42');
@@ -212,7 +211,7 @@ document.getElementById('editFile').addEventListener('change', e => {
       uidHex = extractUIDFromHex(hex, '03', 'A203');
     }
     if (uidHex) {
-      const uid = hexToULEB128Number(uidHex);
+      let uid = hexToULEB128Number(uidHex);
       document.getElementById('currentUIDDisplayEdit').textContent = 'Current UID: ' + uid;
     } else {
       document.getElementById('currentUIDDisplayEdit').textContent = 'UID not found in this file';
