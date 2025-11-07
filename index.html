@@ -9,8 +9,11 @@
 <body>
   <header>
     <div id="logoContainer">
-      <img src="https://i.ibb.co/0pKrffb3/x.png" alt="SSFYT Logo" id="logoImage" onclick="openChannel ()" />
-      <h1 id="logo" onclick="openChannel ()">SSFYT</h1>
+      <img src="https://i.ibb.co/0pKrffb3/x.png" alt="SSFYT Logo" id="logoImage" onclick="openChannel()" />
+      <h1 id="logo" onclick="openChannel()">SSFYT</h1>
+    </div>
+    <div id="warningMessage" class="warning-text">
+      <strong>WARNING:</strong> Please do not upload a previously deleted UID file.
     </div>
     <nav>
       <button onclick="showPage('delete')">UID Delete</button>
@@ -25,9 +28,6 @@
         <input type="file" id="deleteFile" accept=".bytes,.meta" required />
         <button type="submit">Delete UID & Download</button>
       </form>
-      <div id="warningMessage" class="warning-text">
-        <strong>WARNING:</strong> Please do not upload a previously deleted UID file, otherwise the file will get corrupted.
-      </div>
     </section>
 
     <section id="editPage" class="page">
