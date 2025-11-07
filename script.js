@@ -36,7 +36,6 @@ function fromHexString(hex) {
 }
 
 function findLastIndexOfPatternBetween(hex, start, end) {
-  // Find last start index, then search from there for ending pattern, returning start and end index as object
   let lastStartIndex = -1;
   let startPattern = new RegExp(start, 'g');
   let match;
@@ -52,12 +51,11 @@ function findLastIndexOfPatternBetween(hex, start, end) {
 }
 
 function extractUIDFromHex(hex, start, end) {
-  // Modified extraction: find bytes between start and end (dynamic length)
   let range = findLastIndexOfPatternBetween(hex, start, end);
   if (!range) return null;
   let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
   if (!bytesHex) return null;
-  if (/^0+$/.test(bytesHex)) return null; // all zeroes means deleted uid
+  if (/^0+$/.test(bytesHex)) return null;
   return bytesHex;
 }
 
@@ -77,7 +75,15 @@ function deleteUID(hex, start, end) {
   let range = findLastIndexOfPatternBetween(hex, start, end);
   if (!range) return hex;
 
-  // First byte '00', rest removed
+  let bytesLength = range.endIndex - range.startIndex - start.length - end.length;
+  let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
+
+  // यदि deleted UID (सारे 0) या bytes length 7 से कम हो तो डाउनलोड नहीं होगा
+  if (/^0+$/.test(bytesHex) || bytesLength < 7) {
+    return null; // null signify deleted UID or invalid
+  }
+
+  // Delete ऑपरेशन: पहली बाइट 00 करें, बाकी हटा दें
   let replacement = start + '00' + end;
   return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
 }
@@ -86,11 +92,15 @@ function replaceUID(hex, start, end, newUIDHex) {
   let range = findLastIndexOfPatternBetween(hex, start, end);
   if (!range) return hex;
 
-  // Replace entire block between start and end with new UID hex (if shorter, pad with 0; if longer, trim)
-  if (newUIDHex.length < (range.endIndex - range.startIndex - start.length - end.length)) {
-    newUIDHex = newUIDHex.padEnd(range.endIndex - range.startIndex - start.length - end.length, '0');
-  } else if (newUIDHex.length > (range.endIndex - range.startIndex - start.length - end.length)) {
-    newUIDHex = newUIDHex.slice(0, range.endIndex - range.startIndex - start.length - end.length);
+  if (!newUIDHex) return hex;
+
+  // Replace पूरी बाइट क्षेत्र, चाहे लंबाई कम हो या अधिक हो
+  let originalBytesLength = range.endIndex - range.startIndex - start.length - end.length;
+
+  if (newUIDHex.length < originalBytesLength) {
+    newUIDHex = newUIDHex.padEnd(originalBytesLength, '0');
+  } else if (newUIDHex.length > originalBytesLength) {
+    newUIDHex = newUIDHex.slice(0, originalBytesLength);
   }
 
   let replacement = start + newUIDHex + end;
@@ -105,9 +115,13 @@ function processFile(file, mode, newUID = null) {
 
     if (mode === 'delete') {
       if (file.name.endsWith('.bytes')) {
-        hex = deleteUID(hex, '0138', '42');
+        let newHex = deleteUID(hex, '0138', '42');
+        if (newHex === null) {
+          alert('UID already deleted.');
+          return; // रोकें डाउनलोड
+        }
+        hex = newHex;
       } else if (file.name.endsWith('.meta')) {
-        // Meta files unchanged logic, if needed adjust accordingly
         hex = deleteUID(hex, '03', 'A203');
       }
     } else if (mode === 'edit') {
@@ -148,7 +162,6 @@ document.getElementById('editForm').addEventListener('submit', e => {
   processFile(file, 'edit', newUID);
 });
 
-// UID display event listeners (no change)
 document.getElementById('deleteFile').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) {
