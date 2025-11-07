@@ -13,6 +13,22 @@ header {
   margin-top: 20px;
 }
 
+/* Version number style */
+#versionNumber {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background-color: #00ff00;
+  color: #000;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  z-index: 1000;
+  user-select: none;
+  box-shadow: 0 0 10px #00ff00;
+}
+
 /* लोगो इमेज वाला कंटेनर ताकि सेंट्रल रिजाइन हो */
 #logoContainer {
   display: flex;
@@ -104,6 +120,33 @@ button[type="submit"] {
   transition: 0.3s;
 }
 
+button[type="submit"]:hover {
+  background: #00ff80;
+}
+
+.warning-text {
+  background-color: #f00; /* Red background (warning) */
+  color: #000;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-top: 15px;
+  text-align: center;
+  box-shadow: 0 0 10px #fbf176;
+  user-select: none;
+
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: 400px;
+  display: inline-block;
+}
+
+#footerName {
+  color: #ff0;
+  text-shadow: 0 0 10px lime, 0 0 20px green;
+  cursor: pointer;
+  }
 button[type="submit"]:hover {
   background: #00ff80;
 }
