@@ -43,9 +43,9 @@ function findLastIndexOfPatternBetween(hex, start, end) {
     lastStartIndex = match.index;
   }
   if(lastStartIndex === -1) return null;
-  let endIndex = hex.indexOf(end, lastStartIndex+start.length);
+  let endIndex = hex.indexOf(end,lastStartIndex+start.length);
   if(endIndex === -1) return null;
-  return {startIndex: lastStartIndex, endIndex: endIndex+end.length};
+  return {startIndex: lastStartIndex,endIndex: endIndex+end.length};
 }
 
 function extractUIDFromHex(hex, start, end) {
@@ -53,8 +53,7 @@ function extractUIDFromHex(hex, start, end) {
   if(!range) return null;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
   if(!bytesHex) return null;
-  // चाहे bytes कितनी भी हों, इसे UID माना जाएगा, इसलिए सिर्फ '00...' वाली UID को null करें
-  if(/^0+$/.test(bytesHex)) return null;
+  if(/^0+$/.test(bytesHex)) return null; // केवल 00 हो तो UID नहीं माना
   return bytesHex;
 }
 
@@ -74,34 +73,35 @@ function deleteUID(hex, start, end) {
   let range = findLastIndexOfPatternBetween(hex,start,end);
   if(!range) return hex;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
-  // यदि सारे bytes '00' हों या bytes की लम्बाई 7 से कम हो तो download नहीं होगा
-  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7) {
-    return null; 
+
+  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7){ 
+    return null; // Deleted UID या 7 से कम bytes होने पर
   }
-  let replacement = start + '00' + end;
+  let replacement = start + '00' + end; // पहली बाइट 00 और बाकी हटा दो
   return hex.slice(0,range.startIndex) + replacement + hex.slice(range.endIndex);
 }
 
-function editUID(hex, start, end, newUIDHex) {
+function editUID(hex, start, end, newUIDHex){
   let range = findLastIndexOfPatternBetween(hex,start,end);
   if(!range) return hex;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
-  // अगर bytes सारे '00' हों या 7 से कम हों तो पुरानी UID हटाकर नया UID डालो
-  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7) {
+
+  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7){
+    // Deleted या छोटी UID हो तो पुरानी हटाकर नई डालो
     let replacement = start + newUIDHex + end;
     return hex.slice(0,range.startIndex) + replacement + hex.slice(range.endIndex);
-  }
-  else {
-    // अन्यथा पुराने जैसे replace करो newUIDHex से adjusting length
+  } else {
+    // अन्यथा newUIDHex के हिसाब से old block size एडजस्ट करो
     let lenToReplace = range.endIndex - range.startIndex - start.length - end.length;
-    if(newUIDHex.length < lenToReplace) newUIDHex = newUIDHex.padEnd(lenToReplace,'0');
+    if(newUIDHex.length < lenToReplace) newUIDHex = newUIDHex.padEnd(lenToReplace, '0');
     else if(newUIDHex.length > lenToReplace) newUIDHex = newUIDHex.slice(0,lenToReplace);
+
     let replacement = start + newUIDHex + end;
     return hex.slice(0,range.startIndex) + replacement + hex.slice(range.endIndex);
   }
 }
 
-function processFile(file, mode, newUID=null) {
+function processFile(file, mode, newUID=null){
   const reader = new FileReader();
   reader.onload = function(e){
     let data = new Uint8Array(e.target.result);
@@ -115,8 +115,7 @@ function processFile(file, mode, newUID=null) {
           return;
         }
         hex = newHex;
-      }
-      else if(file.name.endsWith('.meta')){
+      } else if(file.name.endsWith('.meta')){
         let newHex = deleteUID(hex,'03','A203');
         if(newHex === null){
           alert('UID already deleted.');
@@ -124,15 +123,14 @@ function processFile(file, mode, newUID=null) {
         }
         hex = newHex;
       }
-    }
-    else if(mode==='edit'){
+    } else if(mode==='edit'){
       if(!newUID) return alert('कृपया नया UID दर्ज करें!');
       let uidBytes = encodeULEB128(BigInt(newUID));
       let uidHex = toHexString(uidBytes);
+
       if(file.name.endsWith('.bytes')){
         hex = editUID(hex,'0138','42',uidHex);
-      }
-      else if(file.name.endsWith('.meta')){
+      } else if(file.name.endsWith('.meta')){
         hex = editUID(hex,'03','A203',uidHex);
       }
     }
@@ -147,69 +145,69 @@ function processFile(file, mode, newUID=null) {
   reader.readAsArrayBuffer(file);
 }
 
-document.getElementById('deleteForm').addEventListener('submit', e=>{
+document.getElementById('deleteForm').addEventListener('submit',e=>{
   e.preventDefault();
-  const file = document.getElementById('deleteFile').files[0];
+  const file=document.getElementById('deleteFile').files[0];
   if(!file) return alert('कृपया फाइल अपलोड करें!');
   processFile(file,'delete');
 });
 
-document.getElementById('editForm').addEventListener('submit', e=>{
+document.getElementById('editForm').addEventListener('submit',e=>{
   e.preventDefault();
-  const file = document.getElementById('editFile').files[0];
-  const newUID = document.getElementById('newUID').value.trim();
+  const file=document.getElementById('editFile').files[0];
+  const newUID=document.getElementById('newUID').value.trim();
   if(!file) return alert('कृपया फाइल अपलोड करें!');
   if(!newUID) return alert('कृपया नया UID डालें!');
   processFile(file,'edit',newUID);
 });
 
-document.getElementById('deleteFile').addEventListener('change', e=>{
-  const file = e.target.files[0];
+document.getElementById('deleteFile').addEventListener('change',e=>{
+  const file=e.target.files[0];
   if(!file){
-    document.getElementById('currentUIDDisplayDelete').textContent = '';
+    document.getElementById('currentUIDDisplayDelete').textContent='';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    let data = new Uint8Array(ev.target.result);
-    let hex = toHexString(data);
-    let uidHex = null;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    let data=new Uint8Array(ev.target.result);
+    let hex=toHexString(data);
+    let uidHex=null;
     if(file.name.endsWith('.bytes')){
-      uidHex = extractUIDFromHex(hex,'0138','42');
-    } else if(file.name.endsWith('.meta')){
-      uidHex = extractUIDFromHex(hex,'03','A203');
+      uidHex=extractUIDFromHex(hex,'0138','42');
+    }else if(file.name.endsWith('.meta')){
+      uidHex=extractUIDFromHex(hex,'03','A203');
     }
     if(uidHex){
-      let uid = hexToULEB128Number(uidHex);
-      document.getElementById('currentUIDDisplayDelete').textContent = 'Current UID: '+uid;
-    } else {
-      document.getElementById('currentUIDDisplayDelete').textContent = 'UID not found in this file';
+      let uid=hexToULEB128Number(uidHex);
+      document.getElementById('currentUIDDisplayDelete').textContent='Current UID: '+uid;
+    }else{
+      document.getElementById('currentUIDDisplayDelete').textContent='UID not found in this file';
     }
   };
   reader.readAsArrayBuffer(file);
 });
 
-document.getElementById('editFile').addEventListener('change', e=>{
-  const file = e.target.files[0];
+document.getElementById('editFile').addEventListener('change',e=>{
+  const file=e.target.files[0];
   if(!file){
-    document.getElementById('currentUIDDisplayEdit').textContent = '';
+    document.getElementById('currentUIDDisplayEdit').textContent='';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    let data = new Uint8Array(ev.target.result);
-    let hex = toHexString(data);
-    let uidHex = null;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    let data=new Uint8Array(ev.target.result);
+    let hex=toHexString(data);
+    let uidHex=null;
     if(file.name.endsWith('.bytes')){
-      uidHex = extractUIDFromHex(hex,'0138','42');
-    } else if(file.name.endsWith('.meta')){
-      uidHex = extractUIDFromHex(hex,'03','A203');
+      uidHex=extractUIDFromHex(hex,'0138','42');
+    }else if(file.name.endsWith('.meta')){
+      uidHex=extractUIDFromHex(hex,'03','A203');
     }
     if(uidHex){
-      let uid = hexToULEB128Number(uidHex);
-      document.getElementById('currentUIDDisplayEdit').textContent = 'Current UID: '+uid;
-    } else {
-      document.getElementById('currentUIDDisplayEdit').textContent = 'UID not found in this file';
+      let uid=hexToULEB128Number(uidHex);
+      document.getElementById('currentUIDDisplayEdit').textContent='Current UID: '+uid;
+    }else{
+      document.getElementById('currentUIDDisplayEdit').textContent='UID not found in this file';
     }
   };
   reader.readAsArrayBuffer(file);
