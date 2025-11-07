@@ -111,7 +111,7 @@ button[type="submit"]:hover {
 .warning-text {
   background-color: #f00; /* Red background (warning) */
   color: #000;
-  padding: 8px 15px;         /* padding कम किया */
+  padding: 8px 15px;
   border-radius: 6px;
   font-weight: bold;
   margin-top: 15px;
@@ -119,16 +119,11 @@ button[type="submit"]:hover {
   box-shadow: 0 0 10px #fbf176;
   user-select: none;
 
-  white-space: nowrap;       /* टेक्स्ट एक लाइन में रखें */
-  overflow: hidden;          /* टेक्स्ट कट जाए अगर ज्यादा हो */
-  text-overflow: ellipsis;   /* कटे हुए टेक्स्ट के लिए तीन डॉट ... दिखाओ */
-  max-width: 350px;          /* बॉक्स की चौड़ाई कम कर 300px किया */
-}
-
-footer {
-  margin-top: 60px;
-  text-align: center;
-  color: #0f0;
+  white-space: normal;      /* टेक्स्ट लाइन ब्रेक हो सके */
+  overflow: visible;        /* कटे नहीं */
+  text-overflow: clip;      /* ellipsis ना लगे */
+  max-width: 400px;         /* चौड़ाई बढ़ा दी */
+  display: inline-block;    /* टेक्स्ट को ब्लॉक/इनलाइन में उचित ढंग से दिखाने के लिए */
 }
 
 #footerName {
