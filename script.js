@@ -1,24 +1,13 @@
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(page + 'Page').classList.add('active');
+  // क्लियर UID डिस्प्ले जब पेज बदले
+  document.getElementById('currentUIDDisplayDelete').textContent = '';
+  document.getElementById('currentUIDDisplayEdit').textContent = '';
 }
 
 function openChannel() {
   window.open('https://youtube.com/@ssfyt_777?si=9JBqTAd9bgnNvT8F', '_blank');
-}
-
-function encodeULEB128(value) {
-  value = BigInt(value);
-  const result = [];
-  do {
-    let byte = Number(value & 0x7Fn);
-    value >>= 7n;
-    if (value !== 0n) {
-      byte |= 0x80;
-    }
-    result.push(byte);
-  } while (value !== 0n);
-  return new Uint8Array(result);
 }
 
 function toHexString(bytes) {
@@ -33,7 +22,6 @@ function fromHexString(hex) {
   return new Uint8Array(arr);
 }
 
-// नीचे से ऊपर खोज कर सबसे आखिरी मैच वाला UID निकालो
 function findLastIndexOfPattern(hex, start, end) {
   let lastIndex = -1;
   let pattern = new RegExp(start + '([0-9A-F]{10})' + end, 'g');
@@ -44,91 +32,68 @@ function findLastIndexOfPattern(hex, start, end) {
   return lastIndex;
 }
 
-// Delete function: पहले बाइट को '00' से रिप्लेस karo,  
-// बाकी 4 बाइट्स (8 hex chars) पूरी तरह हटा दो (remove from hex string)
-function deleteUID(hex, start, end) {
+function extractUIDFromHex(hex, start, end) {
   let lastIndex = findLastIndexOfPattern(hex, start, end);
-  if (lastIndex === -1) return hex; // pattern न मिले तो वैसा ही लौटाओ
-
-  // pattern के शुरू और खत्म स्थान से substring निकालो
-  const len = start.length + 10 + end.length; // total matched length
-  let fullMatch = hex.substr(lastIndex, len);
-
-  // fullMatch: start + 5 bytes (10 hex) + end
-
-  // 5 bytes hex start at start.length, length 10
-  // first byte लेना है '00' से, बाकी substring से हटा देंगे
-
-  // define replacement: start + '00' + end (remove other bytes)
-  // इसलिए hex string से पूरी 5 bytes में से पहला 2 hex char ‘00’, बाकी 8 hex char remove
-  let replacement = start + '00' + end;
-
-  // hex को दो भागों में तोड़ो - पहले lastIndex तक, फिर replacement, फिर बाकी
-  return hex.slice(0, lastIndex) + replacement + hex.slice(lastIndex + len);
+  if (lastIndex === -1) return null;
+  return hex.substr(lastIndex + start.length, 10);
 }
 
-function replaceUID(hex, start, end, newUIDHex) {
-  if (newUIDHex.length < 10) {
-    newUIDHex = newUIDHex.padEnd(10, '0');
-  } else if (newUIDHex.length > 10) {
-    newUIDHex = newUIDHex.slice(0, 10);
+function hexToULEB128Number(hexUID) {
+  const bytes = fromHexString(hexUID);
+  let result = 0n;
+  let shift = 0n;
+  for (let byte of bytes) {
+    result |= BigInt(byte & 0x7F) << shift;
+    if ((byte & 0x80) === 0) break;
+    shift += 7n;
   }
-  let lastIndex = findLastIndexOfPattern(hex, start, end);
-  if (lastIndex === -1) return hex;
-
-  const len = start.length + 10 + end.length;
-  let replacement = start + newUIDHex + end;
-  return hex.slice(0, lastIndex) + replacement + hex.slice(lastIndex + len);
+  return result.toString();
 }
 
-function processFile(file, mode, newUID = null) {
+// अपलोड फाइल से UID निकाल के दिखाओ - Delete फॉर्म
+document.getElementById('deleteFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
   const reader = new FileReader();
-  reader.onload = function (e) {
-    let data = new Uint8Array(e.target.result);
+  reader.onload = function(ev) {
+    let data = new Uint8Array(ev.target.result);
     let hex = toHexString(data);
-
-    if (mode === 'delete') {
-      if (file.name.endsWith('.bytes')) {
-        hex = deleteUID(hex, '38', '42');
-      } else if (file.name.endsWith('.meta')) {
-        hex = deleteUID(hex, '03', 'A203');
-      }
-    } else if (mode === 'edit') {
-      if (!newUID) return alert("कृपया नया UID दर्ज करें!");
-      let uidBytes = encodeULEB128(BigInt(newUID));
-      let uidHex = toHexString(uidBytes);
-      if (uidHex.length < 10) uidHex = uidHex.padEnd(10, '0');
-      else if (uidHex.length > 10) uidHex = uidHex.slice(0, 10);
-
-      if (file.name.endsWith('.bytes')) {
-        hex = replaceUID(hex, '38', '42', uidHex);
-      } else if (file.name.endsWith('.meta')) {
-        hex = replaceUID(hex, '03', 'A203', uidHex);
-      }
+    let uidHex = null;
+    if (file.name.endsWith('.bytes')) {
+      uidHex = extractUIDFromHex(hex, '38', '42');
+    } else if (file.name.endsWith('.meta')) {
+      uidHex = extractUIDFromHex(hex, '03', 'A203');
     }
-
-    const modified = fromHexString(hex);
-    const blob = new Blob([modified], { type: 'application/octet-stream' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = file.name;
-    a.click();
+    if (uidHex) {
+      let uid = hexToULEB128Number(uidHex);
+      document.getElementById('currentUIDDisplayDelete').textContent = 'Current UID: ' + uid;
+    } else {
+      document.getElementById('currentUIDDisplayDelete').textContent = 'UID not found in this file';
+    }
   };
   reader.readAsArrayBuffer(file);
-}
-
-document.getElementById('deleteForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const file = document.getElementById('deleteFile').files[0];
-  if (!file) return alert("कृपया फाइल अपलोड करें!");
-  processFile(file, 'delete');
 });
 
-document.getElementById('editForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const file = document.getElementById('editFile').files[0];
-  const newUID = document.getElementById('newUID').value.trim();
-  if (!file) return alert("कृपया फाइल अपलोड करें!");
-  if (!newUID) return alert("कृपया नया UID डालें!");
-  processFile(file, 'edit', newUID);
+// अपलोड फाइल से UID निकाल के दिखाओ - Edit फॉर्म
+document.getElementById('editFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    let data = new Uint8Array(ev.target.result);
+    let hex = toHexString(data);
+    let uidHex = null;
+    if (file.name.endsWith('.bytes')) {
+      uidHex = extractUIDFromHex(hex, '38', '42');
+    } else if (file.name.endsWith('.meta')) {
+      uidHex = extractUIDFromHex(hex, '03', 'A203');
+    }
+    if (uidHex) {
+      let uid = hexToULEB128Number(uidHex);
+      document.getElementById('currentUIDDisplayEdit').textContent = 'Current UID: ' + uid;
+    } else {
+      document.getElementById('currentUIDDisplayEdit').textContent = 'UID not found in this file';
+    }
+  };
+  reader.readAsArrayBuffer(file);
 });
