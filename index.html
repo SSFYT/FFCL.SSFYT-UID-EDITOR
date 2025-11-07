@@ -5,8 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SSFYT UID Editor</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Version number style for top-left corner */
+    #versionNumber {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: #00ff00;
+      color: #000;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: 'Roboto', sans-serif;
+      z-index: 1000;
+      user-select: none;
+      box-shadow: 0 0 10px #00ff00;
+    }
+  </style>
 </head>
 <body>
+  <div id="versionNumber">V1.0</div>
+
   <header>
     <div id="logoContainer">
       <img src="https://i.ibb.co/0pKrffb3/x.png" alt="SSFYT Logo" id="logoImage" onclick="openChannel()" />
