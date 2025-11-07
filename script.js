@@ -53,6 +53,7 @@ function extractUIDFromHex(hex, start, end) {
   if (!range) return null;
   let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
   if (!bytesHex) return null;
+  // Deleted UID or empty UID ignore
   if (/^0+$/.test(bytesHex)) return null;
   return bytesHex;
 }
@@ -68,105 +69,6 @@ function hexToULEB128Number(hexUID) {
   }
   return result.toString();
 }
-
-function deleteUID(hex, start, end) {
-  let range = findLastIndexOfPatternBetween(hex, start, end);
-  if (!range) return hex;
-
-  let bytesLength = range.endIndex - range.startIndex - start.length - end.length;
-  let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
-
-  if (/^0+$/.test(bytesHex) || bytesLength < 7) {
-    return null; // Deleted UID or too short, don't proceed
-  }
-
-  let replacement = start + '00' + end;
-  return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
-}
-
-function editUID(hex, start, end, newUIDHex) {
-  let range = findLastIndexOfPatternBetween(hex, start, end);
-  if (!range) return hex;
-
-  let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
-
-  if (/^0+$/.test(bytesHex) || (bytesHex.length / 2) < 7) {
-    // Deleted UID or less than 7 bytes, replace entire block with new UID
-    let replacement = start + newUIDHex + end;
-    return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
-  } else {
-    // Otherwise replace keeping size consistent
-    let lengthToReplace = range.endIndex - range.startIndex - start.length - end.length;
-
-    if (newUIDHex.length < lengthToReplace) {
-      newUIDHex = newUIDHex.padEnd(lengthToReplace, '0');
-    } else if (newUIDHex.length > lengthToReplace) {
-      newUIDHex = newUIDHex.slice(0, lengthToReplace);
-    }
-
-    let replacement = start + newUIDHex + end;
-    return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
-  }
-}
-
-function processFile(file, mode, newUID = null) {
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    let data = new Uint8Array(e.target.result);
-    let hex = toHexString(data);
-
-    if (mode === 'delete') {
-      if (file.name.endsWith('.bytes')) {
-        let newHex = deleteUID(hex, '0138', '42');
-        if (newHex === null) {
-          alert('UID already deleted.');
-          return;
-        }
-        hex = newHex;
-      } else if (file.name.endsWith('.meta')) {
-        let newHex = deleteUID(hex, '03', 'A203');
-        if (newHex === null) {
-          alert('UID already deleted.');
-          return;
-        }
-        hex = newHex;
-      }
-    } else if (mode === 'edit') {
-      if (!newUID) return alert("कृपया नया UID दर्ज करें!");
-      let uidBytes = encodeULEB128(BigInt(newUID));
-      let uidHex = toHexString(uidBytes);
-      if (file.name.endsWith('.bytes')) {
-        hex = editUID(hex, '0138', '42', uidHex);
-      } else if (file.name.endsWith('.meta')) {
-        hex = editUID(hex, '03', 'A203', uidHex);
-      }
-    }
-
-    const modified = fromHexString(hex);
-    const blob = new Blob([modified], { type: 'application/octet-stream' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = file.name;
-    a.click();
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-document.getElementById('deleteForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const file = document.getElementById('deleteFile').files[0];
-  if (!file) return alert("कृपया फाइल अपलोड करें!");
-  processFile(file, 'delete');
-});
-
-document.getElementById('editForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const file = document.getElementById('editFile').files[0];
-  const newUID = document.getElementById('newUID').value.trim();
-  if (!file) return alert("कृपया फाइल अपलोड करें!");
-  if (!newUID) return alert("कृपया नया UID डालें!");
-  processFile(file, 'edit', newUID);
-});
 
 document.getElementById('deleteFile').addEventListener('change', e => {
   const file = e.target.files[0];
@@ -188,6 +90,7 @@ document.getElementById('deleteFile').addEventListener('change', e => {
       let uid = hexToULEB128Number(uidHex);
       document.getElementById('currentUIDDisplayDelete').textContent = 'Current UID: ' + uid;
     } else {
+      // यहाँ uidHex null है, तो ये दिखाओ
       document.getElementById('currentUIDDisplayDelete').textContent = 'UID not found in this file';
     }
   };
