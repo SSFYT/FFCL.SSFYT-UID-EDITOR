@@ -23,7 +23,7 @@ header {
 
 /* लोगो इमेज */
 #logoImage {
-  width: 100px; /* बहुत छोटा साइज */
+  width: 100px; /* छोटा साइज */
   height: 100px;
   border-radius: 50%; /* गोल शेप */
   border: 3px solid #00ff00; /* ग्रीन खुबसूरत फ्रेम */
@@ -111,17 +111,18 @@ button[type="submit"]:hover {
 .warning-text {
   background-color: #f00; /* Red background (warning) */
   color: #000;
-  padding: 8px 13px;         /* padding कम किया */
+  padding: 8px 15px;         /* padding कम किया */
   border-radius: 6px;
   font-weight: bold;
   margin-top: 15px;
   text-align: center;
   box-shadow: 0 0 10px #fbf176;
   user-select: none;
+
   white-space: nowrap;       /* टेक्स्ट एक लाइन में रखें */
   overflow: hidden;          /* टेक्स्ट कट जाए अगर ज्यादा हो */
   text-overflow: ellipsis;   /* कटे हुए टेक्स्ट के लिए तीन डॉट ... दिखाओ */
-  max-width: 400px;          /* बॉक्स की ज्यादा चौड़ाई न हो */
+  max-width: 300px;          /* बॉक्स की चौड़ाई कम कर 300px किया */
 }
 
 footer {
