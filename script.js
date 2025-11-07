@@ -77,8 +77,9 @@ function deleteUID(hex, start, end) {
   let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
 
   if (/^0+$/.test(bytesHex) || bytesLength < 7) {
-    return null; // Deleted UID or too small, stop download
+    return null; // Deleted UID or too short, don't proceed
   }
+
   let replacement = start + '00' + end;
   return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
 }
@@ -89,18 +90,20 @@ function editUID(hex, start, end, newUIDHex) {
 
   let bytesHex = hex.slice(range.startIndex + start.length, range.endIndex - end.length);
 
-  if (/^0+$/.test(bytesHex)) {
-    // Deleted UID, replace whole block with newUIDHex
+  if (/^0+$/.test(bytesHex) || (bytesHex.length / 2) < 7) {
+    // Deleted UID or less than 7 bytes, replace entire block with new UID
     let replacement = start + newUIDHex + end;
     return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
   } else {
-    // Replace based on block size, pad or trim newUIDHex
+    // Otherwise replace keeping size consistent
     let lengthToReplace = range.endIndex - range.startIndex - start.length - end.length;
+
     if (newUIDHex.length < lengthToReplace) {
       newUIDHex = newUIDHex.padEnd(lengthToReplace, '0');
     } else if (newUIDHex.length > lengthToReplace) {
       newUIDHex = newUIDHex.slice(0, lengthToReplace);
     }
+
     let replacement = start + newUIDHex + end;
     return hex.slice(0, range.startIndex) + replacement + hex.slice(range.endIndex);
   }
@@ -132,7 +135,6 @@ function processFile(file, mode, newUID = null) {
       if (!newUID) return alert("कृपया नया UID दर्ज करें!");
       let uidBytes = encodeULEB128(BigInt(newUID));
       let uidHex = toHexString(uidBytes);
-
       if (file.name.endsWith('.bytes')) {
         hex = editUID(hex, '0138', '42', uidHex);
       } else if (file.name.endsWith('.meta')) {
@@ -165,8 +167,6 @@ document.getElementById('editForm').addEventListener('submit', e => {
   if (!newUID) return alert("कृपया नया UID डालें!");
   processFile(file, 'edit', newUID);
 });
-
-// UID Display event listeners
 
 document.getElementById('deleteFile').addEventListener('change', e => {
   const file = e.target.files[0];
