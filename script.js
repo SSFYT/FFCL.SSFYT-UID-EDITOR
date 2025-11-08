@@ -100,9 +100,9 @@ function editUID(hex, start, end, newUIDHex){
 }
 
 function processFile(file, mode, newUID=null){
-  // Restrict to .bytes files only
   if(!file.name.endsWith('.bytes')){
-    alert('कृपया केवल .bytes फ़ाइल अपलोड करें।');
+    let displayElem = mode === 'delete' ? document.getElementById('currentUIDDisplayDelete') : document.getElementById('currentUIDDisplayEdit');
+    displayElem.textContent = "this file type not supported please upload only .bytes file";
     return;
   }
 
@@ -159,9 +159,8 @@ document.getElementById('deleteFile').addEventListener('change',e=>{
     return;
   }
   if(!file.name.endsWith('.bytes')){
-    alert('कृपया केवल .bytes फाइल ही अपलोड करें।');
+    document.getElementById('currentUIDDisplayDelete').textContent = "this file type not supported please upload only .bytes file";
     e.target.value = '';
-    document.getElementById('currentUIDDisplayDelete').textContent='';
     return;
   }
   const reader=new FileReader();
@@ -186,9 +185,8 @@ document.getElementById('editFile').addEventListener('change',e=>{
     return;
   }
   if(!file.name.endsWith('.bytes')){
-    alert('कृपया केवल .bytes फाइल ही अपलोड करें।');
+    document.getElementById('currentUIDDisplayEdit').textContent = "this file type not supported please upload only .bytes file";
     e.target.value = '';
-    document.getElementById('currentUIDDisplayEdit').textContent='';
     return;
   }
   const reader=new FileReader();
