@@ -74,9 +74,11 @@ function deleteUID(hex, start, end) {
   if(!range) return hex;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
 
-  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7){ 
-    return null; 
+  // केवल तभी null लौटाओ जब सभी byte '00' हों
+  if (/^0+$/.test(bytesHex)) {
+    return null; // UID already deleted
   }
+  // पहली byte को '00' करें, बाकी bytes हटा दें (चाहे कितने भी हों)
   let replacement = start + '00' + end;
   return hex.slice(0,range.startIndex) + replacement + hex.slice(range.endIndex);
 }
