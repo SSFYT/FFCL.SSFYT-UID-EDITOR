@@ -53,7 +53,8 @@ function extractUIDFromHex(hex, start, end) {
   if(!range) return null;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
   if(!bytesHex) return null;
-  if(/^0+$/.test(bytesHex)) return null; // केवल 00 हो तो UID नहीं माना
+  // चाहे bytes कितनी भी हों, इसे UID माना जाएगा, केवल '00...' वाली UID null करें
+  if(/^0+$/.test(bytesHex)) return null;
   return bytesHex;
 }
 
@@ -74,10 +75,12 @@ function deleteUID(hex, start, end) {
   if(!range) return hex;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
 
-  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7){ 
-    return null; // Deleted UID या 7 से कम bytes होने पर
+  // अगर सारे 0 हों तो माना UID पहले से delete है, download रोकें
+  if(/^0+$/.test(bytesHex)) {
+    return null;
   }
-  let replacement = start + '00' + end; // पहली बाइट 00 और बाकी हटा दो
+  // पहली बाइट 00 करे और बाकी bytes हटाए
+  let replacement = start + '00' + end;
   return hex.slice(0,range.startIndex) + replacement + hex.slice(range.endIndex);
 }
 
@@ -86,14 +89,14 @@ function editUID(hex, start, end, newUIDHex){
   if(!range) return hex;
   let bytesHex = hex.slice(range.startIndex+start.length, range.endIndex-end.length);
 
-  if(/^0+$/.test(bytesHex) || (bytesHex.length/2)<7){
-    // Deleted या छोटी UID हो तो पुरानी हटाकर नई डालो
+  // अगर पुराने UID में सारे bytes 00 हों या bytes 7 से कम हों, तो पूरे block को newUID से replace करें
+  if(/^0+$/.test(bytesHex) || (bytesHex.length / 2) < 7) {
     let replacement = start + newUIDHex + end;
     return hex.slice(0,range.startIndex) + replacement + hex.slice(range.endIndex);
   } else {
-    // अन्यथा newUIDHex के हिसाब से old block size एडजस्ट करो
+    // अन्यथा पुराने जैसे replace करें (padding या truncate के साथ)
     let lenToReplace = range.endIndex - range.startIndex - start.length - end.length;
-    if(newUIDHex.length < lenToReplace) newUIDHex = newUIDHex.padEnd(lenToReplace, '0');
+    if(newUIDHex.length < lenToReplace) newUIDHex = newUIDHex.padEnd(lenToReplace,'0');
     else if(newUIDHex.length > lenToReplace) newUIDHex = newUIDHex.slice(0,lenToReplace);
 
     let replacement = start + newUIDHex + end;
